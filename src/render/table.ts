@@ -98,17 +98,15 @@ export function renderTablePage(
 
 function buildHeader(fileNames: string[]): string {
   const parts = [
-    'Mod'.padEnd(40),
+    'Mod'.padEnd(50),
     'Workshop ID'.padEnd(15),
-    'Issues'.padEnd(7),
-    'Tags'.padEnd(20),
-    'Type'.padEnd(20),
   ];
 
   // Add file presence columns
   for (let i = 0; i < fileNames.length; i++) {
-    const fileName = `File ${i + 1}`.padEnd(10);
-    parts.push(fileName);
+    const fileName = fileNames[i] || `File ${i + 1}`;
+    const truncatedName = truncate(fileName, 25).padEnd(25);
+    parts.push(truncatedName);
   }
 
   parts.push('Link'.padEnd(50));
@@ -117,17 +115,14 @@ function buildHeader(fileNames: string[]): string {
 }
 
 function formatRow(row: ComparisonRow): string {
-  const modName = truncate(row.mod, 38).padEnd(40);
+  const modName = truncate(row.mod, 48).padEnd(50);
   const workshopId = truncate(row.workshop_id, 13).padEnd(15);
-  const issues = row.parse_issues.toString().padEnd(7);
-  const tags = truncate(row.workshop_tags, 18).padEnd(20);
-  const type = truncate(row.derived_type, 18).padEnd(20);
 
-  const parts = [modName, workshopId, issues, tags, type];
+  const parts = [modName, workshopId];
 
   // Add presence indicators
   for (const present of row.presence) {
-    parts.push((present ? '✅' : '❌').padEnd(10));
+    parts.push((present ? '✅' : '❌').padEnd(25));
   }
 
   const link = truncate(row.steam_link, 48).padEnd(50);

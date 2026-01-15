@@ -7,10 +7,7 @@ export function generateCSV(rows: ComparisonRow[], fileNames: string[]): string 
   const header = [
     'Mod',
     'Workshop ID',
-    'Parse Issues',
-    'Workshop Tags',
-    'Derived Type',
-    ...fileNames.map((_, i) => `File ${i + 1}`),
+    ...fileNames,
     'Steam Workshop Link',
   ];
   lines.push(escapeCSV(header));
@@ -20,9 +17,6 @@ export function generateCSV(rows: ComparisonRow[], fileNames: string[]): string 
     const csvRow = [
       row.mod,
       row.workshop_id,
-      row.parse_issues.toString(),
-      row.workshop_tags,
-      row.derived_type,
       ...row.presence.map(p => p ? 'Yes' : 'No'),
       row.steam_link,
     ];
