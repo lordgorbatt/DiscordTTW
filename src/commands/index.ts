@@ -1,17 +1,17 @@
-import { ping } from './ping.js';
-import { help } from './help.js';
+import { data as pingData, command as pingCommand } from './ping.js';
+import { data as helpData, command as helpCommand } from './help.js';
 import type { Command } from '../types/Command.js';
 
 // Export all command data for slash command registration
 export const commandsData = [
-  ping.data,
-  help.data,
+  pingData,
+  helpData,
 ];
 
 // Export all commands for the command handler
 export const commands: Command[] = [
-  ping.command,
-  help.command,
+  pingCommand,
+  helpCommand,
 ];
 
 // Command map for quick lookup

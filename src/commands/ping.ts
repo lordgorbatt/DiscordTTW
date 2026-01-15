@@ -10,7 +10,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
 };
 
 // Legacy message command support
-export const executeMessage = async (message: Message, args: string[]) => {
+export const executeMessage = async (message: Message) => {
   await message.reply('Pong!');
 };
 

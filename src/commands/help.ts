@@ -23,7 +23,7 @@ export const execute = async (interaction: ChatInputCommandInteraction) => {
   await interaction.reply({ embeds: [embed] });
 };
 
-export const executeMessage = async (message: Message, args: string[]) => {
+export const executeMessage = async (message: Message) => {
   const embed = new EmbedBuilder()
     .setTitle('Available Commands')
     .setColor(0x5865F2)

@@ -6,5 +6,5 @@ export interface Command {
   // For slash commands
   executeSlash?: (interaction: ChatInputCommandInteraction) => Promise<void> | void;
   // For message commands (legacy)
-  executeMessage?: (message: Message, args: string[]) => Promise<void> | void;
+  executeMessage?: (message: Message, args?: string[]) => Promise<void> | void;
 }
