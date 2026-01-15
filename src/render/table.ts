@@ -34,7 +34,7 @@ export function renderTablePage(
 
   // Build table
   const lines: string[] = [];
-  lines.push('All Mods — Comparison Table (alphabetical)');
+  lines.push('All Mods — Comparison (A-Z)');
   
   // Calculate total width based on columns
   const header = buildHeader(fileNames);
@@ -119,9 +119,29 @@ function buildHeader(fileNames: string[]): string {
 }
 
 function formatRow(row: ComparisonRow): string {
-  const modName = truncate(row.mod, 58).padEnd(60);
+  // Clean up mod name: remove prefixes like "!!!_", remove .pack extension, format nicely
+  let modName = row.mod;
+  
+  // Remove .pack extension
+  modName = modName.replace(/\.pack$/i, '');
+  
+  // Remove common prefixes (!!!_, !!, !, etc.)
+  modName = modName.replace(/^[!_]+/, '');
+  
+  // Add spaces before capital letters (but not at the start)
+  modName = modName.replace(/([a-z])([A-Z])/g, '$1 $2');
+  
+  // Replace underscores with spaces
+  modName = modName.replace(/_/g, ' ');
+  
+  // Capitalize first letter of each word
+  modName = modName.split(' ').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join(' ');
+  
+  const cleanedModName = truncate(modName, 58).padEnd(60);
 
-  const parts = [modName];
+  const parts = [cleanedModName];
 
   // Add presence indicators
   for (const present of row.presence) {
