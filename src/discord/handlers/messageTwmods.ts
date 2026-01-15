@@ -51,8 +51,19 @@ export async function handleTwmodsMessage(
     for (const attachment of twmodsAttachments.values()) {
       const content = await downloadAttachment(attachment);
       const parseResult = parseTwmods(content);
+      
+      if (parseResult.mods.length === 0) {
+        await processingMsg.edit(`⚠️ File \`${attachment.name}\` was parsed but no mods were found. Please check the file format.`);
+        return;
+      }
+      
       fileMods.push({ name: attachment.name || 'unknown.twmods', mods: parseResult.mods });
       fileNames.push(attachment.name || 'unknown.twmods');
+    }
+    
+    if (fileMods.length === 0) {
+      await processingMsg.edit('❌ No valid mods found in the uploaded files.');
+      return;
     }
 
     // Collect all unique workshop IDs
@@ -136,7 +147,8 @@ export async function handleTwmodsMessage(
 
   } catch (error) {
     console.error('Error processing .twmods files:', error);
-    await processingMsg.edit('❌ Error processing files. Please check the file format and try again.');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    await processingMsg.edit(`❌ Error processing files: ${errorMessage}\n\nPlease check the file format and try again. If the issue persists, check the bot logs.`);
   }
 }
 

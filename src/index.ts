@@ -6,7 +6,9 @@ import { createDiscordClient } from './discord/client.js';
 dotenv.config();
 
 // Initialize Steam cache
-const steamCache = new SteamCache(process.env.STEAM_CACHE_DB || './steam_cache.db');
+// Use /tmp on Railway/Render, or local path for development
+const dbPath = process.env.STEAM_CACHE_DB || (process.env.RAILWAY_ENVIRONMENT ? '/tmp/steam_cache.db' : './steam_cache.db');
+const steamCache = new SteamCache(dbPath);
 
 // Parse allowed channels (optional)
 const allowedChannels = process.env.ALLOWED_CHANNELS
