@@ -1,6 +1,6 @@
 import type { ComparisonRow } from '../domain/compare.js';
 
-const MAX_MESSAGE_LENGTH = 1900; // Leave room for code block markers and pagination info
+const MAX_MESSAGE_LENGTH = 1800; // Leave room for summary, code block markers, and pagination info
 
 export interface TablePage {
   content: string;
@@ -49,10 +49,46 @@ export function renderTablePage(
 
   // Footer with pagination info
   lines.push('─'.repeat(100));
-  lines.push(`Page ${currentPage} of ${totalPages} (${startIndex + 1}-${endIndex} of ${totalRows} mods)`);
+  lines.push(`Page ${currentPage}/${totalPages} (${startIndex + 1}-${endIndex} of ${totalRows})`);
+
+  const tableContent = '```text\n' + lines.join('\n') + '\n```';
+  
+  // Final safety check - ensure content doesn't exceed limit
+  // Discord limit is 2000, but we need room for summary (~100 chars)
+  const maxTableLength = 1850;
+  if (tableContent.length > maxTableLength) {
+    // Reduce rows if needed
+    const headerFooterLines = 5; // title, separator, header, separator, footer
+    const headerFooterLength = lines.slice(0, headerFooterLines).join('\n').length + 
+                                lines.slice(-2).join('\n').length + 10;
+    const availableForRows = maxTableLength - headerFooterLength - 10; // code block markers
+    const rowLength = pageRows[0] ? formatRow(pageRows[0]).length + 1 : 150;
+    const maxRows = Math.max(1, Math.floor(availableForRows / rowLength));
+    
+    if (maxRows < pageRows.length) {
+      const truncatedRows = pageRows.slice(0, maxRows);
+      const truncatedLines = [
+        lines[0], // title
+        lines[1], // separator
+        lines[2], // header
+        lines[3], // separator
+        ...truncatedRows.map(formatRow),
+        lines[lines.length - 2], // separator
+        `Page ${currentPage}/${totalPages} (${startIndex + 1}-${startIndex + maxRows} of ${totalRows})`,
+      ];
+      
+      return {
+        content: '```text\n' + truncatedLines.join('\n') + '\n```',
+        pageNumber: currentPage,
+        totalPages,
+        startIndex,
+        endIndex: Math.min(endIndex, startIndex + maxRows),
+      };
+    }
+  }
 
   return {
-    content: '```text\n' + lines.join('\n') + '\n```',
+    content: tableContent,
     pageNumber: currentPage,
     totalPages,
     startIndex,
@@ -115,12 +151,13 @@ function calculateRowsPerPage(rows: ComparisonRow[], fileNames: string[]): numbe
   // Account for header and footer
   const headerLength = buildHeader(fileNames).length + 1;
   const footerLength = 50; // Approximate
-  const overhead = headerLength + footerLength + 20; // Code block markers, etc.
+  // Account for summary (approx 100 chars), code block markers (8), and spacing (10)
+  const overhead = headerLength + footerLength + 20 + 100 + 18;
 
   const availableSpace = MAX_MESSAGE_LENGTH - overhead;
   const rowsPerPage = Math.max(1, Math.floor(availableSpace / rowLength));
   
-  return Math.min(rowsPerPage, 50); // Cap at 50 rows per page
+  return Math.min(rowsPerPage, 30); // Cap at 30 rows per page to be safe
 }
 
 function createSampleRow(fileNames: string[]): ComparisonRow {

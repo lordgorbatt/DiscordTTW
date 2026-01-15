@@ -109,14 +109,11 @@ export async function handleTwmodsMessage(
       enrichedMods
     );
 
-    // Generate summary
-    let summary = `📊 **Comparison Summary**
-• Files scanned: ${comparison.summary.files_scanned}
-• Total unique mods: ${comparison.summary.union_count}`;
+    // Generate concise summary (must fit with table in 2000 char limit)
+    let summary = `📊 **Summary**: ${comparison.summary.files_scanned} file(s), ${comparison.summary.union_count} mods`;
     
     if (comparison.summary.files_scanned > 1) {
-      summary += `\n• Shared mods: ${comparison.summary.shared_count}
-• Unique per file: ${comparison.summary.unique_per_file.map((c, i) => `File ${i + 1}: ${c}`).join(', ')}`;
+      summary += ` | Shared: ${comparison.summary.shared_count}`;
     }
 
     // Render first page
@@ -138,9 +135,22 @@ export async function handleTwmodsMessage(
       name: 'comparison_table_full.json',
     });
 
+    // Combine summary and table, ensure total is under 2000 chars
+    let fullContent = `${summary}\n\n${page.content}`;
+    
+    // Discord limit is 2000 characters
+    if (fullContent.length > 2000) {
+      // If still too long, truncate the table content
+      const maxTableLength = 2000 - summary.length - 10; // 10 for newlines/spacing
+      if (page.content.length > maxTableLength) {
+        const truncatedTable = page.content.substring(0, maxTableLength - 10) + '\n...```';
+        fullContent = `${summary}\n\n${truncatedTable}`;
+      }
+    }
+
     // Update message with results
     await processingMsg.edit({
-      content: `${summary}\n\n${page.content}`,
+      content: fullContent,
       components: [buttons],
       files: [csvAttachment, jsonAttachment],
     });
