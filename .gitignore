@@ -4,6 +4,10 @@ node_modules/
 # Build output
 dist/
 
+# Database
+*.db
+steam_cache.db
+
 # Environment variables
 .env
 *.env.txt
