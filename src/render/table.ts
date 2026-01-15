@@ -50,9 +50,13 @@ export function renderTablePage(
     lines.push(formatRow(row));
   }
 
-  // Footer with pagination info
+  // Footer
   lines.push('─'.repeat(totalWidth));
-  lines.push(`Page ${currentPage}/${totalPages} (${startIndex + 1}-${endIndex} of ${totalRows})`);
+  if (totalPages > 1) {
+    lines.push(`Showing ${startIndex + 1}-${endIndex} of ${totalRows} mods`);
+  } else {
+    lines.push(`Total: ${totalRows} mods`);
+  }
 
   const tableContent = '```text\n' + lines.join('\n') + '\n```';
   
@@ -141,14 +145,15 @@ function calculateRowsPerPage(rows: ComparisonRow[], fileNames: string[]): numbe
   
   // Account for header and footer
   const headerLength = buildHeader(fileNames).length + 1;
-  const footerLength = 50; // Approximate
+  const footerLength = 30; // Approximate
   // Account for title, separators, code block markers (8), and spacing (10)
   const overhead = headerLength + footerLength + 50 + 18;
 
   const availableSpace = MAX_MESSAGE_LENGTH - overhead;
   const rowsPerPage = Math.max(1, Math.floor(availableSpace / rowLength));
   
-  return Math.min(rowsPerPage, 40); // Can fit more rows now without extra columns
+  // Try to fit as many as possible - return a large number to show all
+  return Math.min(rowsPerPage, 200); // Allow up to 200 rows
 }
 
 function createSampleRow(fileNames: string[]): ComparisonRow {

@@ -4,10 +4,6 @@ import { SteamCache } from '../../steam/cache.js';
 import { fetchSteamWorkshopDetails } from '../../steam/api.js';
 import { enrichMods, compareModFiles } from '../../domain/compare.js';
 import { renderTablePage } from '../../render/table.js';
-import { createPaginationSession, createPaginationButtons } from '../ui/pagination.js';
-import { generateCSV } from '../../export/csv.js';
-import { generateJSON } from '../../export/json.js';
-import { AttachmentBuilder } from 'discord.js';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -109,37 +105,40 @@ export async function handleTwmodsMessage(
       enrichedMods
     );
 
-    // Render first page (no summary, just the table)
-    const page = renderTablePage(comparison.rows, fileNames, 1);
-    const buttons = createPaginationButtons(page.pageNumber, page.totalPages);
-
-    // Create pagination session
-    createPaginationSession(processingMsg.id, message.author.id, comparison.rows, fileNames);
-
-    // Generate exports
-    const csvContent = generateCSV(comparison.rows, fileNames);
-    const jsonContent = generateJSON(comparison.rows);
-
-    const csvAttachment = new AttachmentBuilder(Buffer.from(csvContent, 'utf-8'), {
-      name: 'comparison_table_full.csv',
-    });
-
-    const jsonAttachment = new AttachmentBuilder(Buffer.from(jsonContent, 'utf-8'), {
-      name: 'comparison_table_full.json',
-    });
+    // Render table with all mods (no pagination, show everything)
+    const page = renderTablePage(comparison.rows, fileNames, 1, comparison.rows.length);
 
     // Ensure content is under 2000 chars (Discord limit)
     let fullContent = page.content;
     if (fullContent.length > 2000) {
-      // Truncate if needed
-      fullContent = fullContent.substring(0, 1990) + '\n...```';
+      // If too long, we'll need to split into multiple messages or truncate
+      // For now, show as many as fit
+      const maxLength = 1950;
+      const lines = fullContent.split('\n');
+      const codeBlockStart = '```text\n';
+      const codeBlockEnd = '\n```';
+      const overhead = codeBlockStart.length + codeBlockEnd.length;
+      
+      let contentLength = overhead;
+      const finalLines: string[] = [];
+      finalLines.push(codeBlockStart.replace('```text\n', ''));
+      
+      for (const line of lines.slice(1, -1)) { // Skip code block markers
+        if (contentLength + line.length + 1 > maxLength) {
+          break;
+        }
+        finalLines.push(line);
+        contentLength += line.length + 1;
+      }
+      
+      finalLines.push(`\n... (showing ${finalLines.length - 1} of ${comparison.rows.length} mods)`);
+      fullContent = '```text\n' + finalLines.join('\n') + '\n```';
     }
 
-    // Update message with results (only table, no summary)
+    // Update message with results (only table, no attachments, no pagination)
     await processingMsg.edit({
       content: fullContent,
-      components: [buttons],
-      files: [csvAttachment, jsonAttachment],
+      components: [], // No pagination buttons
     });
 
   } catch (error) {
