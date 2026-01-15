@@ -6,9 +6,7 @@ export function generateCSV(rows: ComparisonRow[], fileNames: string[]): string 
   // Header
   const header = [
     'Mod',
-    'Workshop ID',
     ...fileNames,
-    'Steam Workshop Link',
   ];
   lines.push(escapeCSV(header));
 
@@ -16,9 +14,7 @@ export function generateCSV(rows: ComparisonRow[], fileNames: string[]): string 
   for (const row of rows) {
     const csvRow = [
       row.mod,
-      row.workshop_id,
       ...row.presence.map(p => p ? 'Yes' : 'No'),
-      row.steam_link,
     ];
     lines.push(escapeCSV(csvRow));
   }

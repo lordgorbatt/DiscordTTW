@@ -35,12 +35,15 @@ export function renderTablePage(
   // Build table
   const lines: string[] = [];
   lines.push('All Mods — Comparison Table (alphabetical)');
-  lines.push('═'.repeat(100));
+  
+  // Calculate total width based on columns
+  const header = buildHeader(fileNames);
+  const totalWidth = Math.max(header.length, 80); // Minimum width
+  lines.push('═'.repeat(totalWidth));
   
   // Header
-  const header = buildHeader(fileNames);
   lines.push(header);
-  lines.push('─'.repeat(100));
+  lines.push('─'.repeat(totalWidth));
 
   // Rows
   for (const row of pageRows) {
@@ -48,14 +51,14 @@ export function renderTablePage(
   }
 
   // Footer with pagination info
-  lines.push('─'.repeat(100));
+  lines.push('─'.repeat(totalWidth));
   lines.push(`Page ${currentPage}/${totalPages} (${startIndex + 1}-${endIndex} of ${totalRows})`);
 
   const tableContent = '```text\n' + lines.join('\n') + '\n```';
   
   // Final safety check - ensure content doesn't exceed limit
-  // Discord limit is 2000, but we need room for summary (~100 chars)
-  const maxTableLength = 1850;
+  // Discord limit is 2000 characters
+  const maxTableLength = 1950;
   if (tableContent.length > maxTableLength) {
     // Reduce rows if needed
     const headerFooterLines = 5; // title, separator, header, separator, footer
@@ -67,13 +70,15 @@ export function renderTablePage(
     
     if (maxRows < pageRows.length) {
       const truncatedRows = pageRows.slice(0, maxRows);
+      const header = buildHeader(fileNames);
+      const totalWidth = Math.max(header.length, 80);
       const truncatedLines = [
         lines[0], // title
-        lines[1], // separator
-        lines[2], // header
-        lines[3], // separator
+        '═'.repeat(totalWidth), // separator
+        header, // header
+        '─'.repeat(totalWidth), // separator
         ...truncatedRows.map(formatRow),
-        lines[lines.length - 2], // separator
+        '─'.repeat(totalWidth), // separator
         `Page ${currentPage}/${totalPages} (${startIndex + 1}-${startIndex + maxRows} of ${totalRows})`,
       ];
       
@@ -97,36 +102,27 @@ export function renderTablePage(
 }
 
 function buildHeader(fileNames: string[]): string {
-  const parts = [
-    'Mod'.padEnd(50),
-    'Workshop ID'.padEnd(15),
-  ];
+  const parts = ['Mod'.padEnd(60)];
 
-  // Add file presence columns
+  // Add file presence columns with actual file names
   for (let i = 0; i < fileNames.length; i++) {
     const fileName = fileNames[i] || `File ${i + 1}`;
-    const truncatedName = truncate(fileName, 25).padEnd(25);
+    const truncatedName = truncate(fileName, 30).padEnd(30);
     parts.push(truncatedName);
   }
-
-  parts.push('Link'.padEnd(50));
 
   return parts.join(' | ');
 }
 
 function formatRow(row: ComparisonRow): string {
-  const modName = truncate(row.mod, 48).padEnd(50);
-  const workshopId = truncate(row.workshop_id, 13).padEnd(15);
+  const modName = truncate(row.mod, 58).padEnd(60);
 
-  const parts = [modName, workshopId];
+  const parts = [modName];
 
   // Add presence indicators
   for (const present of row.presence) {
-    parts.push((present ? '✅' : '❌').padEnd(25));
+    parts.push((present ? '✅' : '❌').padEnd(30));
   }
-
-  const link = truncate(row.steam_link, 48).padEnd(50);
-  parts.push(link);
 
   return parts.join(' | ');
 }
@@ -146,13 +142,13 @@ function calculateRowsPerPage(rows: ComparisonRow[], fileNames: string[]): numbe
   // Account for header and footer
   const headerLength = buildHeader(fileNames).length + 1;
   const footerLength = 50; // Approximate
-  // Account for summary (approx 100 chars), code block markers (8), and spacing (10)
-  const overhead = headerLength + footerLength + 20 + 100 + 18;
+  // Account for title, separators, code block markers (8), and spacing (10)
+  const overhead = headerLength + footerLength + 50 + 18;
 
   const availableSpace = MAX_MESSAGE_LENGTH - overhead;
   const rowsPerPage = Math.max(1, Math.floor(availableSpace / rowLength));
   
-  return Math.min(rowsPerPage, 30); // Cap at 30 rows per page to be safe
+  return Math.min(rowsPerPage, 40); // Can fit more rows now without extra columns
 }
 
 function createSampleRow(fileNames: string[]): ComparisonRow {

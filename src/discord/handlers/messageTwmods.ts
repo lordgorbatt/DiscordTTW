@@ -109,14 +109,7 @@ export async function handleTwmodsMessage(
       enrichedMods
     );
 
-    // Generate concise summary (must fit with table in 2000 char limit)
-    let summary = `📊 **Summary**: ${comparison.summary.files_scanned} file(s), ${comparison.summary.union_count} mods`;
-    
-    if (comparison.summary.files_scanned > 1) {
-      summary += ` | Shared: ${comparison.summary.shared_count}`;
-    }
-
-    // Render first page
+    // Render first page (no summary, just the table)
     const page = renderTablePage(comparison.rows, fileNames, 1);
     const buttons = createPaginationButtons(page.pageNumber, page.totalPages);
 
@@ -125,7 +118,7 @@ export async function handleTwmodsMessage(
 
     // Generate exports
     const csvContent = generateCSV(comparison.rows, fileNames);
-      const jsonContent = generateJSON(comparison.rows);
+    const jsonContent = generateJSON(comparison.rows);
 
     const csvAttachment = new AttachmentBuilder(Buffer.from(csvContent, 'utf-8'), {
       name: 'comparison_table_full.csv',
@@ -135,20 +128,14 @@ export async function handleTwmodsMessage(
       name: 'comparison_table_full.json',
     });
 
-    // Combine summary and table, ensure total is under 2000 chars
-    let fullContent = `${summary}\n\n${page.content}`;
-    
-    // Discord limit is 2000 characters
+    // Ensure content is under 2000 chars (Discord limit)
+    let fullContent = page.content;
     if (fullContent.length > 2000) {
-      // If still too long, truncate the table content
-      const maxTableLength = 2000 - summary.length - 10; // 10 for newlines/spacing
-      if (page.content.length > maxTableLength) {
-        const truncatedTable = page.content.substring(0, maxTableLength - 10) + '\n...```';
-        fullContent = `${summary}\n\n${truncatedTable}`;
-      }
+      // Truncate if needed
+      fullContent = fullContent.substring(0, 1990) + '\n...```';
     }
 
-    // Update message with results
+    // Update message with results (only table, no summary)
     await processingMsg.edit({
       content: fullContent,
       components: [buttons],
